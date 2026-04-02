@@ -203,7 +203,7 @@ class CarparkAvailabilityService {
 
 export default CarparkAvailabilityService;
 
-// // Testing
+// Testing
 // const c = new CarparkAvailabilityService();
 // const carparks = await c.findCarparks("Ang Mo Kio Central Market & Food Centre", 500)
 // console.log(carparks);

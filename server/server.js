@@ -1,7 +1,10 @@
+// server.js
 import express from "express";
 import cors from "cors";
 
-import carparkRouter from "./routes/carparkRoutes.js";
+import carparkRouter from "./routes/carparkRoute.js";
+import favoriteRouter from "./routes/favoriteCarparkRoute.js";
+import authRouter from "./routes/authRoute.js"; // <-- import auth routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,8 +17,10 @@ app.use(cors({
   origin: "http://localhost:5173" // <-- your frontend URL
 }));
 
-// Mount your carpark router
+// Mount your routers
 app.use("/api/carparks", carparkRouter);
+app.use("/api/favorites", favoriteRouter);
+app.use("/api/auth", authRouter); // <-- mount auth router
 
 // Root endpoint
 app.get("/", (req, res) => {
