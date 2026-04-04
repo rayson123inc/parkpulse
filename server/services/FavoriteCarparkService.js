@@ -12,7 +12,7 @@ class FavoriteCarparkService {
     this.tableName = "favorites";
   }
 
-  // ➕ Add favorite
+  // Add favorite
   async addFavorite(userId, carparkId) {
     const params = {
       TableName: this.tableName,

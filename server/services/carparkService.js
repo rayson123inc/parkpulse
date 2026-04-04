@@ -164,12 +164,6 @@ class CarparkAvailabilityService {
         },
       });
 
-      console.log(
-        ">>> Fetched availability data for",
-        data.items[0]?.carpark_data.length,
-        "carparks"
-      );
-
       return data.items[0]?.carpark_data || [];
     } catch (error) {
       console.error(
