@@ -117,38 +117,117 @@
 
 // demo();
 
+
+// // Testing redis caching
+// import fetch from "node-fetch";
+
+// const address = "Ang Mo Kio Market";
+// const radius = 500;
+
+// const URL = `http://localhost:3000/api/carparks?address=${encodeURIComponent(address)}&radius=${radius}`;
+
+// console.log(URL);
+
+// const ITERATIONS = 50;
+
+// async function runTest() {
+//   let totalTime = 0;
+
+//   for (let i = 0; i < ITERATIONS; i++) {
+//     const start = performance.now();
+
+//     const res = await fetch(URL);
+//     const data = await res.json();
+
+//     const end = performance.now();
+//     const duration = end - start;
+
+//     console.log(
+//       `Request ${i + 1}: ${duration.toFixed(2)} ms | carparks=${data.carparks?.length}`
+//     );
+
+//     totalTime += duration;
+//   }
+
+//   console.log("\n--- RESULT ---");
+//   console.log(`Average: ${(totalTime / ITERATIONS).toFixed(2)} ms`);
+// }
+
+// runTest();
+
+
+// Testing load balancing across multiple server instances
 import fetch from "node-fetch";
 
-const address = "Ang Mo Kio Market";
+const locations = [
+  "ALBERT CENTRE MARKET & FOOD CENTRE",
+  "ANG MO KIO 628 MARKET",
+  "BEDOK 85 MARKET & FOOD CENTRE",
+  "CHAI CHEE MARKET",
+  "CHOA CHU KANG MARKET",
+  "CLEMENTI MARKET",
+  "GEYLANG SERAI MARKET",
+  "HOUGANG 308 MARKET",
+  "JURONG WEST 505 MARKET",
+  "KALLANG MARKET"
+];
+
 const radius = 500;
+const URL_BASE = `http://localhost:8080/api/carparks`;
 
-const URL = `http://localhost:3000/api/carparks?address=${encodeURIComponent(address)}&radius=${radius}`;
+// Track port distribution
+const portCount = {};
 
-console.log(URL);
-
-const ITERATIONS = 50;
-
-async function runTest() {
-  let totalTime = 0;
-
-  for (let i = 0; i < ITERATIONS; i++) {
-    const start = performance.now();
-
-    const res = await fetch(URL);
+async function makeRequest(i, address) {
+  const start = Date.now();
+  try {
+    const res = await fetch(`${URL_BASE}?address=${encodeURIComponent(address)}&radius=${radius}`);
     const data = await res.json();
-
-    const end = performance.now();
+    const end = Date.now();
     const duration = end - start;
 
-    console.log(
-      `Request ${i + 1}: ${duration.toFixed(2)} ms | carparks=${data.carparks?.length}`
-    );
+    const carparkCount = Array.isArray(data.carparks) ? data.carparks.length : 0;
+    const port = data.port || "unknown";
 
-    totalTime += duration;
+    // Track how many requests each server handled
+    portCount[port] = (portCount[port] || 0) + 1;
+
+    console.log(
+      `Request ${i + 1}`.padEnd(12, " ") +
+      `| ${address.padEnd(40, " ")} | port=${port.padEnd(5, " ")} | carparks=${carparkCount.toString().padEnd(5, " ")} | time=${duration}ms`
+    );
+  } catch (err) {
+    const end = Date.now();
+    console.error(`Request ${i + 1} (${address}) failed after ${end - start}ms:`, err.message);
+  }
+}
+
+async function runTest() {
+  const totalRequests = 1000;
+  const batchSize = 10; // 10 requests concurrently
+  let requestCounter = 0;
+
+  console.log("--- Starting Test ---");
+  const startTime = Date.now();
+
+  while (requestCounter < totalRequests) {
+    const batch = [];
+    for (let i = 0; i < batchSize && requestCounter < totalRequests; i++) {
+      const address = locations[requestCounter % locations.length];
+      batch.push(makeRequest(requestCounter, address));
+      requestCounter++;
+    }
+    await Promise.all(batch);
   }
 
-  console.log("\n--- RESULT ---");
-  console.log(`Average: ${(totalTime / ITERATIONS).toFixed(2)} ms`);
+  const endTime = Date.now();
+  console.log(`\n--- Test Complete ---`);
+  console.log(`Total time taken: ${endTime - startTime} ms\n`);
+
+  console.log("--- Server Distribution ---");
+  Object.entries(portCount).forEach(([port, count]) => {
+    console.log(`Port ${port}: ${count} requests`);
+  });
 }
 
 runTest();

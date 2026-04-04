@@ -1,10 +1,49 @@
 # Redis Caching Implementation
 
-ParkPulse is a high-read application, and the api/carparks endpoint experiences heavy traffic during peak hours. To improve performance and reduce response times, we implemented Redis caching for frequently accessed carpark data.
+ParkPulse is a high-read application, and the `api/carparks` endpoint experiences heavy traffic during peak hours. To improve performance and reduce response times, we implemented Redis caching for frequently accessed carpark data.
 
 Since carpark slot availability updates every 2 minutes, we set the TTL (Time-To-Live) of cached entries to 120 seconds, ensuring that the cache stays fresh while minimizing unnecessary database queries.
 
 This caching strategy achieved an **18× reduction** in average response time.
+
+### Testing
+```javascript
+import fetch from "node-fetch";
+
+const address = "Ang Mo Kio Market";
+const radius = 500;
+
+const URL = `http://localhost:3000/api/carparks?address=${encodeURIComponent(address)}&radius=${radius}`;
+
+console.log(URL);
+
+const ITERATIONS = 50;
+
+async function runTest() {
+  let totalTime = 0;
+
+  for (let i = 0; i < ITERATIONS; i++) {
+    const start = performance.now();
+
+    const res = await fetch(URL);
+    const data = await res.json();
+
+    const end = performance.now();
+    const duration = end - start;
+
+    console.log(
+      `Request ${i + 1}: ${duration.toFixed(2)} ms | carparks=${data.carparks?.length}`
+    );
+
+    totalTime += duration;
+  }
+
+  console.log("\n--- RESULT ---");
+  console.log(`Average: ${(totalTime / ITERATIONS).toFixed(2)} ms`);
+}
+
+runTest();
+```
 
 ### Without Caching
 
