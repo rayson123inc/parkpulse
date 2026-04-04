@@ -19,7 +19,7 @@ export default function MiniMap({ carparks, center, onMarkerClick }) {
     : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-slate-700/50 dark:border-slate-700/50 h-48">
+    <div className="results-mini-map rounded-2xl overflow-hidden border border-slate-700/50 dark:border-slate-700/50 h-48">
       <MapContainer
         center={center || [1.2900, 103.8550]}
         zoom={14}

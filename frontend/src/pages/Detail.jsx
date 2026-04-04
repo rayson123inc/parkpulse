@@ -77,7 +77,7 @@ export default function Detail() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 dark:from-blue-50 dark:to-slate-50 text-white dark:text-slate-800">
       {/* Map header */}
-      <div className="relative h-56">
+      <div className="detail-map-header relative h-56">
         <MapContainer
           center={[carpark.latitude, carpark.longitude]}
           zoom={16}

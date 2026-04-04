@@ -86,3 +86,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+body.view-mode-desktop .max-w-lg {
+  max-width: min(72rem, calc(100vw - 4rem)) !important;
+}
+
+body.view-mode-mobile .max-w-lg {
+  max-width: 32rem !important;
+}
+
+body.view-mode-mobile .results-mini-map {
+  height: min(52vh, 22rem) !important;
+  min-height: 18rem;
+}
+
+body.view-mode-mobile .detail-map-header {
+  height: min(46vh, 24rem) !important;
+  min-height: 18rem;
+}
+
+body.view-mode-desktop .results-mini-map {
+  height: 28rem !important;
+}
+
+body.view-mode-desktop .detail-map-header {
+  height: 24rem !important;
+}
