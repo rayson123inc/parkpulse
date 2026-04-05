@@ -118,11 +118,14 @@ export class AuthService {
       new GetCommand({ TableName: this.usersTable, Key: { userId } })
     );
 
+    // Debug log to verify user data retrieval
+    console.log("login success:", { userId, email, name: data.Item?.name });
+
     return { 
       token: IdToken, 
-      accessToken: AccessToken,  // <-- add access token here
-      refreshToken: RefreshToken, // optional
-      user: data.Item ?? null 
+      accessToken: AccessToken,
+      userId: userId,
+      name: data.Item?.name || "Unknown",
     };
   }
 
@@ -147,6 +150,9 @@ export class AuthService {
     });
 
     await this.cognitoClient.send(command);
+
+    // Debug log to confirm logout
+    console.log("User logged out successfully");
     return { message: "User logged out successfully" };
   }
 }

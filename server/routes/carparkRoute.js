@@ -53,7 +53,25 @@
 //     console.error("Carpark error:", error.message);
 //     res.status(500).json({ error: error.message });
 //   }
+
 // });
+
+// router.get("/:id", async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const availability = await service.fetchCarparkAvailabilityById(id);
+
+//     if (!availability) {
+//       return res.status(404).json({ error: "Carpark not found" });
+//     }
+
+//     res.json({ availability });
+//   } catch (error) {
+//     console.error("Carpark detail error:", error.message);
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
 
 // export default router;
 
@@ -85,6 +103,22 @@ router.get("/", async (req, res) => {
 
   } catch (error) {
     console.error("Carpark error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const availability = await service.fetchCarparkAvailabilityById(id);
+
+    if (!availability) {
+      return res.status(404).json({ error: "Carpark not found" });
+    }
+
+    res.json({ availability });
+  } catch (error) {
+    console.error("Carpark detail error:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

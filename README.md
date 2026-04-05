@@ -1,7 +1,7 @@
 # Project Setup
 
-This project consists of a **React frontend** and a **Node.js backend**.  
-Follow the instructions below to run each part.
+This project consists of a **React frontend** and a **Node.js backend**.
+You need to have your own API keys for **OneMap** and **Data.gov.sg** before running the backend.
 
 ---
 
@@ -11,7 +11,7 @@ Follow the instructions below to run each part.
 
 ```bash
 cd frontend
-````
+```
 
 2. Install dependencies:
 
@@ -31,7 +31,7 @@ npx vite --port 5173
 
 ## Backend (Node.js)
 
-1. Navigate to the server folder:
+1. Navigate to the backend folder:
 
 ```bash
 cd server
@@ -43,7 +43,23 @@ cd server
 npm install
 ```
 
-3. Start the backend server:
+3. Create a `.env` file in the backend folder with the following environment variables:
+
+```env
+# OneMap Elastic Search API key
+ONEMAP_API_KEY=YOUR_ONEMAP_API_KEY_HERE
+
+# Data.gov.sg API key
+DATA_GOV_API_KEY=YOUR_DATA_GOV_API_KEY_HERE
+```
+
+> **Note:** You must replace `YOUR_ONEMAP_API_KEY_HERE` and `YOUR_DATA_GOV_API_KEY_HERE` with your own API keys.
+> You can obtain:
+>
+> * **OneMap API key** from [https://www.onemap.gov.sg/docs/](https://www.onemap.gov.sg/docs/)
+> * **Data.gov.sg API key** from [https://data.gov.sg/developer](https://data.gov.sg/developer)
+
+4. Start the backend server:
 
 ```bash
 # Option 1: With nodemon (auto-restarts on changes)
@@ -52,7 +68,3 @@ nodemon server
 # Option 2: With Node.js directly
 node server
 ```
-
-* The backend will run on the default port defined in `server` (check your `.env` or server config).
-
----

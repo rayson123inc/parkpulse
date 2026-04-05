@@ -1,58 +1,32 @@
-import { useEffect, useState } from 'react';
-import { Toaster } from "@/components/ui/toaster"
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClientInstance } from '@/lib/query-cilent'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import { Navigate } from 'react-router-dom';
-import { ThemeProvider } from 'next-themes';
-import Home from './pages/Home';
-import Results from './pages/Results';
-import Detail from './pages/Detail';
-import NavigatePage from './pages/Navigate';
-import Rate from './pages/Rate';
-import SavePrompt from './pages/SavePrompt';
-import ThankYou from './pages/ThankYou';
-import Saved from './pages/Saved';
-import { Monitor, Smartphone } from 'lucide-react';
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClientInstance } from "@/lib/query-cilent";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 
-const VIEW_MODE_STORAGE_KEY = 'parkpulse_view_mode';
+import { AuthProvider, useAuth } from "@/lib/AuthContext";
+import PageNotFound from "./lib/PageNotFound";
+import UserNotRegisteredError from "@/components/UserNotRegisteredError";
 
-function getInitialViewMode() {
-  if (typeof window === 'undefined') return 'mobile';
+// Pages
+import Auth from "./pages/Auth";
+import Home from "./pages/Home";
+import Results from "./pages/Results";
+import Detail from "./pages/Detail";
+import NavigatePage from "./pages/Navigate";
+import Rate from "./pages/Rate";
+import SavePrompt from "./pages/SavePrompt";
+import ThankYou from "./pages/ThankYou";
+import Saved from "./pages/Saved";
 
-  const saved = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-  if (saved === 'mobile' || saved === 'desktop') return saved;
-
-  return window.matchMedia('(min-width: 1024px)').matches ? 'desktop' : 'mobile';
-}
-
-function ViewModeToggle({ mode, onToggle }) {
-  const isDesktopMode = mode === 'desktop';
-
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={isDesktopMode}
-      className="hidden lg:flex fixed top-4 right-4 z-[2000] items-center gap-2 px-3 py-2 rounded-xl border border-slate-300/70 bg-white/90 text-slate-700 shadow-lg backdrop-blur hover:bg-white transition-colors dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-200 dark:hover:bg-slate-900"
-      title={isDesktopMode ? 'Switch to mobile view' : 'Switch to desktop view'}
-    >
-      {isDesktopMode ? <Smartphone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
-      <span className="text-xs font-medium">
-        {isDesktopMode ? 'Mobile View' : 'Desktop View'}
-      </span>
-    </button>
-  );
-}
-
+// ---------------------
+// Protected App
+// ---------------------
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  // Loading spinner
+  if (isLoadingAuth || isLoadingPublicSettings) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -61,20 +35,20 @@ const AuthenticatedApp = () => {
   }
 
   // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
+  if (authError?.type === "auth_required") {
+    return <Navigate to="/auth" replace />;
   }
 
-  // Render the main app
+  if (authError?.type === "user_not_registered") {
+    return <UserNotRegisteredError />;
+  }
+
+  // Protected routes
   return (
     <Routes>
+      {/* Default "/" goes to Home */}
       <Route path="/" element={<Navigate to="/Home" replace />} />
+
       <Route path="/Home" element={<Home />} />
       <Route path="/Results" element={<Results />} />
       <Route path="/Detail" element={<Detail />} />
@@ -88,36 +62,31 @@ const AuthenticatedApp = () => {
   );
 };
 
-
+// ---------------------
+// Main App
+// ---------------------
 function App() {
-  const [viewMode, setViewMode] = useState(getInitialViewMode);
-
-  useEffect(() => {
-    document.body.classList.remove('view-mode-mobile', 'view-mode-desktop');
-    document.body.classList.add(`view-mode-${viewMode}`);
-    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
-
-    return () => {
-      document.body.classList.remove('view-mode-mobile', 'view-mode-desktop');
-    };
-  }, [viewMode]);
-
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
           <Router>
-            <AuthenticatedApp />
-            <ViewModeToggle
-              mode={viewMode}
-              onToggle={() => setViewMode((prev) => (prev === 'mobile' ? 'desktop' : 'mobile'))}
-            />
+            <Routes>
+              {/* Public routes */}
+              <Route path="/auth" element={<Auth />} />
+
+              {/* Protected routes */}
+              <Route path="/*" element={<AuthenticatedApp />} />
+
+              {/* Catch-all → redirect first-time visitors to /auth */}
+              <Route path="*" element={<Navigate to="/auth" replace />} />
+            </Routes>
           </Router>
           <Toaster />
         </QueryClientProvider>
       </AuthProvider>
     </ThemeProvider>
-  )
+  );
 }
 
-export default App
+export default App;

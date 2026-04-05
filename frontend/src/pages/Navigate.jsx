@@ -421,7 +421,7 @@ export default function Navigate() {
           <FloatingBtn icon={muted ? VolumeX : Volume2} onClick={() => setMuted(!muted)} />
           <FloatingBtn
             icon={X}
-            onClick={() => navigate('/Home')}
+            onClick={() => navigate(`/Rate?id=${carpark.id}`, { state: { carpark } })}
             className="bg-red-500/20 hover:bg-red-500/30"
           />
         </div>

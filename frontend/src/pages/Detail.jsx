@@ -101,7 +101,7 @@ export default function Detail() {
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="px-5 -mt-6 relative z-10 pb-8 max-w-lg mx-auto"
+        className="px-5 relative z-10 pb-8 max-w-lg mx-auto mt-20"
       >
         <div className="bg-slate-800/80 dark:bg-white/90 backdrop-blur-xl border border-slate-700/50 dark:border-slate-200/50 rounded-2xl p-5 space-y-5">
           {/* Title & Rating */}

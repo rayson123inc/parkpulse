@@ -1,8 +1,8 @@
 // NOTES:
-// Previously using Google Maps API for nearby search but switched to gov data for better compatibility with availability data
+// Previously using Google Maps API for geocoding nearby search but switched to OneMap API + DATA.GOV.SG database for better compatibility with SG carpark data 
 
 import axios from "axios";
-import { latLonToSVY21, svy21ToLatLon } from "../utils/coordConverter.js";
+import { svy21ToLatLon } from "../utils/coordConverter.js";
 import { carparkDB } from "../utils/carparkDB.js";
 
 import path from "path";
@@ -13,60 +13,37 @@ dotenv.config({ path: path.resolve("../.env") });
 
 class CarparkAvailabilityService {
   constructor() {
-    this.GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+    this.ONEMAP_API_KEY = process.env.ONEMAP_API_KEY;
     this.DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
   }
 
-  // Convert address → lat/lng
+  // Convert address → lat/lng using OneMap Elastic Search API
   async getGeocode(address) {
     const encoded = encodeURIComponent(address);
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encoded}&key=${this.GOOGLE_API_KEY}`;
+    const url = `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${encoded}&returnGeom=Y&getAddrDetails=Y&pageNum=1`;
+    
+    const authToken = this.ONEMAP_API_KEY; // Set in .env
 
-    const { data } = await axios.get(url);
+    const { data } = await axios.get(url, {
+      headers: {
+        Authorization: authToken,
+      },
+    });
 
-    if (!data.results.length) throw new Error("Address not found");
+    if (!data.results || data.results.length === 0) {
+      throw new Error("Address not found");
+    }
 
     const result = data.results[0];
     return {
-      formattedAddress: result.formatted_address,
-      latitude: result.geometry.location.lat,
-      longitude: result.geometry.location.lng,
+      formattedAddress: result.ADDRESS,
+      latitude: parseFloat(result.X),
+      longitude: parseFloat(result.Y),
     };
   }
 
   // Search nearby carparks
   async searchNearbyCarpark(latitude, longitude, radius, evCharging) {
-    // GOOGLE MAP NEARBY API (commented out)
-    /*
-    const body = {
-      includedTypes: ["parking"],
-      maxResultCount: 10,
-      locationRestriction: {
-        circle: { center: { latitude, longitude }, radius },
-      },
-    };
-
-    const response = await axios.post(
-      "https://places.googleapis.com/v1/places:searchNearby",
-      body,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": this.GOOGLE_API_KEY,
-          "X-Goog-FieldMask": [
-            "places.displayName",
-            "places.location",
-            "places.formattedAddress",
-          ].join(","),
-        },
-      }
-    );
-
-    return response.data.places || [];
-    */
-
-    // GOV DATA SG CARPARK DB
-    const { easting, northing } = latLonToSVY21(latitude, longitude); // Convert input lat/lng → SVY21
 
     // Step 1: Filter all carparks within radius using squared distance (faster)
     const nearbyCarparksRaw = carparkDB
@@ -74,7 +51,7 @@ class CarparkAvailabilityService {
         const cx = parseFloat(carpark.x_coord);
         const cy = parseFloat(carpark.y_coord);
 
-        const dist2 = (cx - easting) ** 2 + (cy - northing) ** 2;
+        const dist2 = (cx - latitude) ** 2 + (cy - longitude) ** 2;
 
         return { carpark, dist2 };
       })
@@ -114,6 +91,7 @@ class CarparkAvailabilityService {
       );
 
       return {
+        carpark_no: carpark.car_park_no,
         name: carpark.address,
         location: { latitude: lat, longitude: lon },
         available_lots: info ? parseInt(info.lots_available) : null,
@@ -133,7 +111,7 @@ class CarparkAvailabilityService {
     return enrichedCarparks;
   }
 
-  // Fetch real-time availability
+  // Fetch real-time availability for all carparks
   async fetchCarparkAvailability() {
     // LTA DataMall API (commented out)
     /*
@@ -174,6 +152,7 @@ class CarparkAvailabilityService {
     }
   }
 
+  // Sort carparks by availability (most available first)
   sortByAvailability(carparks) {
     return carparks.sort((a, b) => {
       if (a.available_lots === "No data") return -1;
@@ -182,7 +161,17 @@ class CarparkAvailabilityService {
     });
   }
 
-  // MAIN FUNCTION: find carparks near an address
+  // Fetch availability for a specific carpark by ID
+  async fetchCarparkAvailabilityById(carparkId) {
+    const availabilityData = await this.fetchCarparkAvailability();
+    const availability = availabilityData.find((a) => a.carpark_number === carparkId);
+    console.log(`>>> Availability for ${carparkId}`);
+    const info = availability?.carpark_info?.[0];
+
+    return info
+  }
+
+  // MAIN FUNCTION: find carparks near an address with availability and other info
   async findCarparks(address, radius = 500, evCharging = false) {
     // Step 1: Geocode address → lat/lng
     const geo = await this.getGeocode(address);

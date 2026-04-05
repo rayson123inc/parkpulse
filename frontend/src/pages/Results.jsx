@@ -90,7 +90,7 @@ export default function Results() {
         const carparks = res.data.carparks || [];
 
         return carparks.map((cp, index) => ({
-          id: index,
+          id: cp.carpark_no,
           name: cp.name,
           distance: cp.distance,
           latitude: cp.location?.latitude ?? 0,
@@ -161,7 +161,7 @@ export default function Results() {
           <MiniMap
             carparks={filtered}
             center={center}
-            onMarkerClick={(cp) => navigate(`/Detail?id=${encodeURIComponent(cp.id)}`, { state: { carpark: cp, userGps } })}
+            onMarkerClick={(cp) => navigate(`/Detail?id=${encodeURIComponent(cp.carpark_no)}`, { state: { carpark: cp, userGps } })}
           />
         )}
 

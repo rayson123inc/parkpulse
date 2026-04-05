@@ -1,7 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { db } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Bookmark } from 'lucide-react';
@@ -10,23 +9,24 @@ export default function SavePrompt() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(window.location.search);
-  const id = params.get('id');
+  const carparkId = params.get('id');
+  const carpark = location.state?.carpark;
 
-  const { data: carparks = [] } = useQuery({
-    queryKey: ['carpark-save', id],
-    queryFn: () => db.entities.Carpark.filter({ id }),
-  });
+  // Get userId from localStorage
+  const userId = localStorage.getItem('userId');
 
-  const carpark = location.state?.carpark || carparks[0];
-
+  // Mutation: call POST /api/favorites
   const saveMutation = useMutation({
-    mutationFn: () =>
-      db.entities.SavedCarpark.create({
-        carpark_id: id,
-        carpark_name: carpark?.name || 'Saved Carpark',
-        latitude: carpark?.latitude,
-        longitude: carpark?.longitude,
-      }),
+    mutationFn: async () => {
+      if (!userId || !carparkId) throw new Error('Missing userId or carparkId');
+      const res = await fetch('http://localhost:3000/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, carparkId }),
+      });
+      if (!res.ok) throw new Error('Failed to save favorite');
+      return res.json();
+    },
     onSuccess: () => navigate('/ThankYou'),
   });
 
@@ -56,11 +56,11 @@ export default function SavePrompt() {
         <div className="space-y-3">
           <Button
             onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isLoading}
             className="w-full h-14 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-xl shadow-lg shadow-teal-500/25"
           >
             <Bookmark className="w-5 h-5 mr-2" />
-            {saveMutation.isPending ? 'Saving...' : 'Save Carpark'}
+            {saveMutation.isLoading ? 'Saving...' : 'Save Carpark'}
           </Button>
           <button
             onClick={() => navigate('/ThankYou')}
